@@ -47,11 +47,10 @@ const ARScreen = () => {
         </View>
 
         <View style={styles.modelView}>
-          <Canvas style={{ flex: 1 }} camera={{ position: [0, 0, 3], fov:30 }}>
+          <Canvas style={{ flex: 1 }} camera={{ position: [0, 0, 3], fov:30 }} gl={{ antialias: false }}  >
             <ambientLight intensity={2} />
-            <directionalLight position={[0, 5, 5]} intensity={2} />
-            <pointLight position={[10, 10, 10]} intensity={2} />
-            <OrbitControls />
+            <directionalLight position={[0, 5, 5]} intensity={1} />
+            <OrbitControls enableDamping={false}/>
             <Suspense fallback={null}>
                 {(selectedModel=="male")?(isFormal)?<MaleFormal/>:<MaleCasual/>:(isFormal)?<FemaleFormal/>:<FemaleCasual/>}
             </Suspense>
