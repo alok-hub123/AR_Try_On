@@ -1,11 +1,10 @@
 import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
-import React from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber/native';
 import MaleFormal from '../components/MaleFormal';
 import MaleCasual from '../components/MaleCasual';
 import FemaleFormal from '../components/FemaleFormal';
 import FemaleCasual from '../components/FemaleCasual';
-import { Suspense } from 'react';
 import { OrbitControls } from '@react-three/drei';
 import styles from './Style';
 import { useState } from 'react';
@@ -19,8 +18,12 @@ const ARScreen = () => {
 
   const [selectedModel, setSelectedModel] = useState<Gender>('male');
   const [selectedCategory, setSelectedCategory] = useState<Category>('tops');
-  const [selectedOutfit, setSelectedOutfit] = useState<string>('1');
-  const [isFormal, setIsFormal] = useState<boolean>(false); 
+  const [selectedOutfit, setSelectedOutfit] = useState<string | null>(null);
+  const [isFormal, setIsFormal] = useState<boolean>(false);
+
+  const handleClear = () => {
+    setSelectedOutfit(null); // Reset to null to show default model material
+  };
 
   return (
     <View style={styles.container}>
@@ -47,29 +50,33 @@ const ARScreen = () => {
         </View>
 
         <View style={styles.modelView}>
-          <Canvas style={{ flex: 1 }} camera={{ position: [0, 0, 3], fov:30 }} gl={{ antialias: false }}  >
+          <Canvas style={{ flex: 1 }} camera={{ position: [0, 0, 3], fov: 30 }} gl={{ antialias: false }}  >
             <ambientLight intensity={2} />
             <directionalLight position={[0, 5, 5]} intensity={1} />
-            <OrbitControls enableDamping={false}/>
+            <OrbitControls enableDamping={false} />
             <Suspense fallback={null}>
-                {(selectedModel=="male")?(isFormal)?<MaleFormal/>:<MaleCasual/>:(isFormal)?<FemaleFormal/>:<FemaleCasual/>}
+              {(selectedModel == "male") ?
+                (isFormal) ? <MaleFormal outfitId={selectedOutfit} category={selectedCategory} /> :
+                  <MaleCasual outfitId={selectedOutfit} category={selectedCategory} /> :
+                (isFormal) ? <FemaleFormal outfitId={selectedOutfit} category={selectedCategory}/> :
+                  <FemaleCasual outfitId={selectedOutfit} category={selectedCategory} />}
             </Suspense>
           </Canvas>
 
-          <TouchableOpacity style={styles.clearButton} onPress={()=>console.log('Clear')}>
-            <Text style={{textAlign:"center"}}>Clear</Text>
+          <TouchableOpacity style={styles.clearButton} onPress={()=>handleClear()}>
+            <Text style={{ textAlign: "center" }}>Clear</Text>
           </TouchableOpacity>
 
           {
-          (selectedModel=="male")?
-            <TouchableOpacity style={styles.formalToggle} onPress={()=>setIsFormal(!isFormal)}>
-            <Text style={{textAlign:"center",color:"#ffcd82"}}>{isFormal?"Casual":"Formal"}</Text>
-            <Image source={isFormal?require('../assets/images/maleCasual.png'):require('../assets/images/maleFormal.png')} style={{width:50, height:50, marginLeft:5}} />
-          </TouchableOpacity>:
-          <TouchableOpacity style={styles.formalToggle} onPress={()=>setIsFormal(!isFormal)}>
-            <Text style={{textAlign:"center",color:"#ffcd82"}}>{isFormal?"Modern":"Classical"}</Text>
-            <Image source={isFormal?require('../assets/images/femaleCasual.png'):require('../assets/images/femaleFormal.png')} style={{width:50, height:50, marginLeft:5 }} />
-          </TouchableOpacity>
+            (selectedModel == "male") ?
+              <TouchableOpacity style={styles.formalToggle} onPress={() => setIsFormal(!isFormal)}>
+                <Text style={{ textAlign: "center", color: "#ffcd82" }}>{isFormal ? "Casual" : "Formal"}</Text>
+                <Image source={isFormal ? require('../assets/images/maleCasual.png') : require('../assets/images/maleFormal.png')} style={{ width: 50, height: 50, marginLeft: 5 }} />
+              </TouchableOpacity> :
+              <TouchableOpacity style={styles.formalToggle} onPress={() => setIsFormal(!isFormal)}>
+                <Text style={{ textAlign: "center", color: "#ffcd82" }}>{isFormal ? "Modern" : "Classical"}</Text>
+                <Image source={isFormal ? require('../assets/images/femaleCasual.png') : require('../assets/images/femaleFormal.png')} style={{ width: 50, height: 50, marginLeft: 5 }} />
+              </TouchableOpacity>
           }
 
         </View>
@@ -103,7 +110,7 @@ const ARScreen = () => {
 
         <FlatList
           horizontal
-          data={(isFormal)?formalOutfits[selectedModel][selectedCategory]:casualOutfits[selectedModel][selectedCategory]}
+          data={(isFormal) ? formalOutfits[selectedModel][selectedCategory] : casualOutfits[selectedModel][selectedCategory]}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity

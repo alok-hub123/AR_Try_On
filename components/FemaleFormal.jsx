@@ -1,11 +1,44 @@
-import React, { useRef } from 'react'
+import React, { useRef,  useEffect, useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
+import { Asset } from 'expo-asset';
+import { TextureLoader } from 'three';
+import FormalOutfits from '@/app/FormalOutfitData';
 
-export default function FemaleFormal(props) {
+export default function FemaleFormal({ outfitId, category, ...props }) {
   const { nodes, materials } = useGLTF(require('../assets/models/fformal.glb'))
 
   const groupRef = useRef(); // Reference to the group
+
+  // Find the selected outfit and load its texture
+  const selectedOutfit = outfitId
+    ? FormalOutfits.female[category].find((item) => item.id === outfitId)
+    : null;
+  
+  // Store default materials to revert to them on clear
+  const defaultMaterials = useMemo(() => ({
+    outfit: materials.outfit.clone(),
+  }), [materials]);
+
+  // Load texture using Expo Asset and TextureLoader
+  useEffect(() => {
+    if (selectedOutfit) {
+      const asset = Asset.fromModule(selectedOutfit.texture);
+      asset.downloadAsync().then(() => {
+        const textureLoader = new TextureLoader();
+        textureLoader.load(asset.localUri || asset.uri, (texture) => {
+          if (category === 'tops') {
+            materials.outfit.map = texture;
+            materials.outfit.needsUpdate = true;
+          }
+        });
+      });
+    } else {
+      // Revert to default materials when outfitId is null
+      materials.outfit.map = defaultMaterials.outfit.map;
+      materials.outfit.needsUpdate = true;
+    }
+  }, [selectedOutfit, category, materials, defaultMaterials]);
   
     // Continuous rotation using useFrame
     useFrame((state, delta) => {
